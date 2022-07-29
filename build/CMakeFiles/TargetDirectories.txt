@@ -1,0 +1,6 @@
+/home/ar/projects/rvs/build/CMakeFiles/rebuild_cache.dir
+/home/ar/projects/rvs/build/CMakeFiles/edit_cache.dir
+/home/ar/projects/rvs/build/CMakeFiles/rvs.dir
+/home/ar/projects/rvs/build/test/CMakeFiles/rebuild_cache.dir
+/home/ar/projects/rvs/build/test/CMakeFiles/edit_cache.dir
+/home/ar/projects/rvs/build/test/CMakeFiles/rvs_test.dir
