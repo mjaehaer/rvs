@@ -6,8 +6,6 @@ typedef std::function<void(const HttpResponsePtr &)> Callback;
 
 void save(const HttpRequestPtr &request, Callback &&callback, std::string &&key) {
     nosql::RedisClientPtr redisClient = app().getRedisClient();
-    std::cout << "start save, key :" << std::endl;
-    std::cout << key << std::endl;
     auto jsonInput = request->getJsonObject();
     if (!jsonInput)
     {
@@ -20,13 +18,11 @@ void save(const HttpRequestPtr &request, Callback &&callback, std::string &&key)
     Json::StreamWriterBuilder builder;
     builder["indentation"] = "";
     const std::string output = Json::writeString(builder, *jsonInput);
-//    std::string valueJson = (*jsonInput).toString();
     std::string command ="set " +  key + " " + "'"  + output + "'";
-    std::cout << "set " << command << std::endl;
-    std::cout << "write in redis" << std::endl;
     redisClient->execCommandAsync(
         [callback](const drogon::nosql::RedisResult &r) {
 	    auto resp = HttpResponse::newHttpResponse();
+	    resp->setBody("Created");
 	    resp->setStatusCode(k201Created);
 	    callback(resp);
 	},
@@ -36,8 +32,6 @@ void save(const HttpRequestPtr &request, Callback &&callback, std::string &&key)
         command
 	
 );
-    std::cout << key << std::endl;
-    //callback();
 }
 
 int main() {
