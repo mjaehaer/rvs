@@ -5,11 +5,19 @@ using namespace drogon;
 typedef std::function<void(const HttpResponsePtr &)> Callback;
 
 void show(const HttpRequestPtr &request, Callback &&callback, std::string &&key) {
-//    nosql::RedisClientPtr redisClient = app().getRedisClient();
-//    redisClient->execCommandAsync(
-	
-//);
-	std::cout << key << std::endl;
+    nosql::RedisClientPtr redisClient = app().getRedisClient();
+    redisClient->execCommandAsync(
+	[callback](const drogon::nosql::RedisResult &r) {
+		std::cout << "OKE" << std::endl;
+		//std::cout << r.asString() << std::endl;
+	},	
+	[](const std::exception &err) {
+		LOG_ERROR << "redis not work" << err.what();
+	},
+	"get %s",
+	key
+);
+    std::cout << key << std::endl;
 }
 
 void save(const HttpRequestPtr &request, Callback &&callback, std::string &&key) {
