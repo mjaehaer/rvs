@@ -4,6 +4,14 @@ using namespace drogon;
 
 typedef std::function<void(const HttpResponsePtr &)> Callback;
 
+void show(const HttpRequestPtr &request, Callback &&callback, std::string &&key) {
+//    nosql::RedisClientPtr redisClient = app().getRedisClient();
+//    redisClient->execCommandAsync(
+	
+//);
+	std::cout << key << std::endl;
+}
+
 void save(const HttpRequestPtr &request, Callback &&callback, std::string &&key) {
     nosql::RedisClientPtr redisClient = app().getRedisClient();
     auto jsonInput = request->getJsonObject();
@@ -26,9 +34,13 @@ void save(const HttpRequestPtr &request, Callback &&callback, std::string &&key)
 	    resp->setStatusCode(k201Created);
 	    callback(resp);
 	},
-        [](const std::exception &err) {
+        [callback](const std::exception &err) {
 		LOG_ERROR << "ERROR REDIS" << err.what();
-	},
+		auto resp = HttpResponse::newHttpResponse();
+                resp->setBody("Error");
+                resp->setStatusCode(k400BadRequest);
+                callback(resp);	
+},
         command
 	
 );
@@ -40,7 +52,7 @@ int main() {
 //		 .setLogPath("./")
 //		 .setLogLevel(trantor::Logger::kWarn)
 		 .registerHandler("/save?KEY={key}", &save, {drogon::Post})
-//    drogon::app().registerHandler("/save?KEY={KEY}", &save, {drogon::Post});
+		 .registerHandler("/show?KEY={key}", &show, {drogon::Get})
 //    drogon::app().registerHandler("/del?KEY={KEY}"
     		 .createRedisClient("127.0.0.1", 6379)
     		 .run();
