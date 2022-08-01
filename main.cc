@@ -4,14 +4,39 @@ using namespace drogon;
 
 typedef std::function<void(const HttpResponsePtr &)> Callback;
 
+void del(const HttpRequestPtr &request, Callback &&callback, std::string &&key) {
+    nosql::RedisClientPtr redisClient = app().getRedisClient();
+    std::string command = "del " + key;
+    redisClient->execCommandAsync(
+	[callback](const drogon::nosql::RedisResult &r) {
+		auto resp = HttpResponse::newHttpResponse();
+		resp->setBody("Deleted");
+		callback(resp);
+	},
+	[callback](const std::exception &err) {
+                LOG_ERROR << "redis not work" << err.what();
+        	auto resp = HttpResponse::newHttpResponse();
+                resp->setBody("Error");
+                resp->setStatusCode(k400BadRequest);
+                callback(resp); 
+	},
+        command
+);
+}
+
 void show(const HttpRequestPtr &request, Callback &&callback, std::string &&key) {
     nosql::RedisClientPtr redisClient = app().getRedisClient();
     std::string command = "get " + key;
     redisClient->execCommandAsync(
 	[callback](const drogon::nosql::RedisResult &r) {
-		std::cout << "OKE" << std::endl;
+		if (r.type() == nosql::RedisResultType::kNil)
+		{
+			auto resp = HttpResponse::newHttpResponse();
+			resp->setStatusCode(k404NotFound);
+			callback(resp);
+			return;		
+		}
 		std::string redisResponse = r.asString();
-		std::cout << &redisResponse << std::endl;
 		Json::Value response;
 		Json::CharReaderBuilder builder;
 		Json::CharReader *reader = builder.newCharReader();
@@ -28,13 +53,13 @@ void show(const HttpRequestPtr &request, Callback &&callback, std::string &&key)
 		}
 		auto resp = HttpResponse::newHttpJsonResponse(response);
 		callback(resp);
+		
 	},	
 	[](const std::exception &err) {
-		LOG_ERROR << "redis not work" << err.what();
+		LOG_ERROR << "Redis not work" << err.what();
 	},
 	command
 );
-    std::cout << key << std::endl;
 }
 
 void save(const HttpRequestPtr &request, Callback &&callback, std::string &&key) {
@@ -78,7 +103,7 @@ int main() {
 //		 .setLogLevel(trantor::Logger::kWarn)
 		 .registerHandler("/save?KEY={key}", &save, {drogon::Post})
 		 .registerHandler("/show?KEY={key}", &show, {drogon::Get})
-//    drogon::app().registerHandler("/del?KEY={KEY}"
+ 		 .registerHandler("/del?KEY={key}", &del, {drogon::Delete})
     		 .createRedisClient("127.0.0.1", 6379)
     		 .run();
 	
